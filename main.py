@@ -40,13 +40,13 @@ builder = Builder.load_string("""
         size_hint:1,.9
 """)
 class slopeField(Widget):
-    myFormula = "x^2"
+    myFormula = "x^2" # default formula
     mySize = []
     startx = 0
     starty = 0
     endx = 0
     endy = 0
-    def findSize(self):
+    def findSize(self): # finds graph size
         pointString = self.ids["points"].text
         size = []
         first = pointString.index(")")
@@ -60,7 +60,7 @@ class slopeField(Widget):
         size.append(abs(self.endx - self.startx))
         size.append(abs(self.endy - self.starty))
         self.mySize = size
-    def fix(self):
+    def fix(self): # recursively fixes common syntax to python ex: ^2 to **2
         self.myFormula = self.fixHelper(self.myFormula)
     def fixHelper(self, formula):
         for x in range(len(formula)-1):
@@ -77,7 +77,7 @@ class slopeField(Widget):
             if x <= len(formula)-1 and formula[x] == "e" and (x==0 or not formula[x-1] == "."):
                 return self.fixHelper(formula[0:x] + "math.e" + formula[x+1::])
         return formula
-    def yVal(self, x, y):
+    def yVal(self, x, y): # takes care of divide by zero and evaluates function.
         x = (float)(x)
         y = (float)(y)
         try: 
@@ -86,7 +86,7 @@ class slopeField(Widget):
             return 9999999
         except ValueError:
             return None
-    def displayLines(self):
+    def displayLines(self): # outputs lines on graph.
         increment = (float)(self.ids["increment"].text)
         xBuffer = (self.size[0]/self.mySize[0])/2.
         yBuffer = self.size[1]*.1+(self.size[1]/self.mySize[1])/2.
@@ -97,16 +97,23 @@ class slopeField(Widget):
                 realX = myX * increment
                 realY = myY * increment
                 if not self.yVal(realX+self.startx, realY+self.starty) == None:
-                    myLength = (.81 + abs((realY-.45*self.yVal(realX+self.startx, realY+self.starty)) - (realY + .45*self.yVal(realX+self.startx, realY+self.starty)))**2)**.5
+                    myLength = (.81 
+                                + abs((realY-.45*self.yVal(realX+self.startx, realY+self.starty)) 
+                                - (realY + .45*self.yVal(realX+self.startx, realY+self.starty)))**2)**.5
                     lMult = 1./myLength*increment
                     with self.ids["lineScreen"].canvas:
                         Color(0,0,0)
-                        Line(points = ((realX-.45*lMult)*xMult+xBuffer,(realY-.45*self.yVal(realX+self.startx, realY+self.starty)*lMult)*yMult+yBuffer,(realX+.45*lMult)*xMult+xBuffer,(realY + .45*self.yVal(realX+self.startx,realY+self.starty)*lMult)*yMult+yBuffer), width = 1)
-        with self.ids["lineScreen"].canvas:
+                        #Makes a line of the right size (using lMult and Buffers) 
+                        Line(points = ((realX-.45*lMult)*xMult+xBuffer,
+                                       (realY-.45*self.yVal(realX+self.startx, realY+self.starty)*lMult)*yMult+yBuffer,
+                                       (realX+.45*lMult)*xMult+xBuffer,
+                                       (realY + .45*self.yVal(realX+self.startx,realY+self.starty)*lMult)*yMult+yBuffer), 
+                                        width = 1)
+        with self.ids["lineScreen"].canvas: #Makes axis
             Color(1,0,0)
             Line(points = (0, -self.starty*yMult+yBuffer, (self.size[0]+1)*xMult, -self.starty*yMult+yBuffer), width = 1, dash_offset = 30, dash_length = 30)
             Line(points = (-self.startx*xMult+xBuffer, self.size[1]*.1, -self.startx*xMult+xBuffer, (self.size[1] + 1)*yMult), width = 1, dash_offset = 30, dash_length = 30)
-    def callback(self):
+    def callback(self): #Graphs lines when the graphing button is pressed
         self.ids["lineScreen"].canvas.clear()
         self.findSize()
         self.myFormula = self.ids["equation"].text
